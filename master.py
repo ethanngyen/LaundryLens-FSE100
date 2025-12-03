@@ -22,7 +22,10 @@ BuzzPin = 12 #18
 TRIG = 13 #27
 ECHO = 15 # 22
 
-client = OpenAI(api_key="API_KEY")
+# Load environment variables
+load_dotenv()
+
+client = OpenAI(api_key= os.environ.get("OPENAI_API_KEY"))
 MODEL = "gpt-5-nano-2025-08-07"
 IMAGE_PATH = "captured_image.jpg"
 RESOLUTION = "680x480"
@@ -49,7 +52,7 @@ def setup():
     GPIO.setup(ECHO, GPIO.IN)
     
 def detect(chn):
-	message(GPIO.input(BtnPin))
+	button_action(GPIO.input(BtnPin))
 	pass
 
 
@@ -150,9 +153,10 @@ if __name__ == '__main__':  # Program start from here
         while True:
             dis = distance()
             if (dis < 100) and (dis > 50):
-                activate_vibration(0.5)
+                button_action(GPIO.input(BtnPin))
+                activate_vibration(0.1)
                 
-            button_action(GPIO.input(BtnPin))
+            
             
             
     except KeyboardInterrupt:  # When 'Ctrl+C' is pressed, the child program destroy() will be  executed.
