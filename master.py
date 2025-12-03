@@ -12,11 +12,11 @@ BuzzPin = 12
 client = OpenAI(api_key="API_KEY")
 MODEL = "gpt-5-nano-2025-08-07"
 IMAGE_PATH = "captured_image.jpg"
-RESOLUTION = "1024x1024"
+RESOLUTION = "680x480"
 
 PROMPT = (
             "Reply with EXACTLY ONE short sentence (<= 15 words) "
-            "describing the main visible objects. Do not read text."
+            "describing the COLOR and PATTERN of the clothing artifact."
         )
 
 
@@ -44,6 +44,24 @@ def to_data_url(path):
     with open(path, "rb") as f:
         b64 = base64.b64encode(f.read()).decode("utf-8")
     return f"data:image/jpeg;base64,{b64}"
+    
+#--------------------------------------------------------------------------------------------
+
+def extract_text(resp):
+    text = getattr(resp, "output_text", None)
+    if text:
+        return text.strip()
+    try:
+        for item in getattr(resp, "output", []):
+            for part in getattr(item, "content", []):
+                if getattr(part, "type", None) in ("output_text", "text") and getattr(part, "text", None):
+                    return part.text.strip()
+    except Exception:
+        pass
+    try:
+        return resp.model_dump_json(indent=2)
+    except Exception:
+        return str(resp)
 
 def get_response(prompt, data_url):
     resp = client.responses.create(
@@ -60,6 +78,7 @@ def get_response(prompt, data_url):
     )
     print(extract_text(resp))
 
+#--------------------------------------------------------------------------------------------------------------------------------------------
 
 
 def activate_vibration(x):
