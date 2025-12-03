@@ -5,9 +5,22 @@ import time
 import base64
 import sys
 from openai import OpenAI
+import pyttsx3
 
-BtnPin = 11
-BuzzPin = 12
+engine = pyttsx3.init()
+
+
+
+
+#RGB Sensor Model: TCS34725
+
+
+BtnPin = 11 #17
+BuzzPin = 12 #18
+
+#UltraSonic
+TRIG = 13 #27
+ECHO = 15 # 22
 
 client = OpenAI(api_key="API_KEY")
 MODEL = "gpt-5-nano-2025-08-07"
@@ -31,9 +44,33 @@ def setup():
     GPIO.setup(BuzzPin, GPIO.OUT)
     GPIO.output(BuzzPin, GPIO.LOW)
     
+    #Ultrasonic
+    GPIO.setup(TRIG, GPIO.OUT)
+    GPIO.setup(ECHO, GPIO.IN)
+    
 def detect(chn):
 	message(GPIO.input(BtnPin))
 	pass
+
+
+def distance():
+	GPIO.output(TRIG, 0)
+	time.sleep(0.000002)
+
+	GPIO.output(TRIG, 1)
+	time.sleep(0.00001)
+	GPIO.output(TRIG, 0)
+
+	
+	while GPIO.input(ECHO) == 0:
+		a = 0
+	time1 = time.time()
+	while GPIO.input(ECHO) == 1:
+		a = 1
+	time2 = time.time()
+
+	during = time2 - time1
+	return during * 340 / 2 * 100
 
 
 def capture_image(path: str):
@@ -76,7 +113,12 @@ def get_response(prompt, data_url):
             ]
         }],
     )
+    speech = extract_text(resp)
     print(extract_text(resp))
+    engine.setProperty('rate', 100) # Set speech rate
+    engine.say(speech)
+    engine.runAndWait()
+    
 
 #--------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -106,7 +148,12 @@ if __name__ == '__main__':  # Program start from here
     setup()
     try:
         while True:
+            dis = distance()
+            if (dis < 100) and (dis > 50):
+                activate_vibration(0.5)
+                
             button_action(GPIO.input(BtnPin))
-            pass
+            
+            
     except KeyboardInterrupt:  # When 'Ctrl+C' is pressed, the child program destroy() will be  executed.
         GPIO.cleanup()
